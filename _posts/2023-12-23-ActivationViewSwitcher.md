@@ -2,7 +2,7 @@
 layout: post
 short_title: Using ActivationViewSwitcher
 title: Multiple Views in UWP - ActivationViewSwitcher
-author: YourOrdinaryCat
+author: yourordinarycat
 ---
 
 If you're maintaining a UWP app with multiple windows, you're likely aware of how tricky it is to manage the main view's closure (AKA consolidation). If your user clicks on an "open in new window" button, and accidentally closes the initial window, any subsequent attempts to launch the app will get them booted to the secondary window they opened a bit ago. So they now have to close the app to access the main view again. Not a fun time for anyone involved.

@@ -2,7 +2,7 @@
 layout: post
 short_title: Fixing Node's Relative Module Imports
 title: Fixing Node's Relative Module Imports
-author: YourOrdinaryCat
+author: yourordinarycat
 ---
 
 I bet you hate how this looks as much as I do:
