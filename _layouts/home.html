@@ -1,52 +1,22 @@
----
-layout: compress
----
-
 <!DOCTYPE html>
-<html lang="{{ site.lang | default: 'en-US' }}">
+<html attr.lang="{Binding language}">
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta charset="utf-8">
-  <title>{{ site.title }}</title>
-  <link href="{{ '/assets/css/home.jekyll.css' | relative_url }}" rel="stylesheet">
-  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="shortcut icon" href="/favicon.ico">
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="manifest" href="/site.webmanifest">
+  <title innerText="{Binding title}"></title>
+  <link attr.href="{StaticResource HomePageStyle}" rel="stylesheet">
 </head>
 
 <body>
   <main>
-    <article>
-      {{ content }}
-      <br>
+    <blg-article></blg-article>
 
-      <h2>posts</h2>
-      {% for post in site.posts %}
-      <br>
-      <a href="{{ post.url | relative_url }}">
-        <h3>{{ post.title }}</h3>
-      </a>
-
-      <p class="secondary" no-margin>
-        <time datetime="{{ post.date | date_to_xmlschema }}">
-          {{ post.date | date: "%B %-d, %Y" }}
-        </time>
-        • {{ post.author }}
-      </p>
-
-      {% endfor %}
-    </article>
+    <hr>
   </main>
 
   <footer>
-    <br>
-    <hr>
-    <br>
-
-    <p class="secondary wfsth" text-centeralign>Waiting for something to happen?</p>
+    <small class="secondary wfsth" text-centeralign>Waiting for something to happen?</small>
   </footer>
 </body>
 
