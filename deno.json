@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "lib": ["esnext"],
+        "lib": ["esnext", "deno.ns"],
         "strict": true,
         "allowUnusedLabels": false,
         "allowUnreachableCode": false,
@@ -25,5 +25,9 @@
             "tags": ["recommended"],
             "include": ["require-await", "verbatim-module-syntax"]
         }
+    },
+    "imports": {
+        "@std/fs": "jsr:@std/fs@^1.0.24",
+        "@std/path": "jsr:@std/path@^1.1.6"
     }
 }
