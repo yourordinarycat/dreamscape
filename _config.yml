@@ -1,6 +1,0 @@
-title: "☆ dreamscape ☆"
-author: "yourordinarycat"
-sass:
-  style: compressed
-plugins:
-  - jekyll-feed
