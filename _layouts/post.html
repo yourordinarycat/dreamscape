@@ -1,57 +1,47 @@
----
-layout: compress
----
-
 <!DOCTYPE html>
-<html lang="{{ site.lang | default: 'en-US' }}">
+<html attr.lang="{Binding language}">
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta charset="utf-8">
-  <title>{{ page.short_title }} | {{ site.title }}</title>
-  <meta name="author" content="{{ page.author }}">
-  <link href="{{ '/assets/css/post.jekyll.css' | relative_url }}" rel="stylesheet">
-  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="shortcut icon" href="/favicon.ico">
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="manifest" href="/site.webmanifest">
+  <title innerText="{Binding title}"></title>
+  <meta name="author" attr.content="{Binding author}">
+  <link attr.href="{StaticResource BasePageStyle}" rel="stylesheet">
 </head>
 
 <body>
   <main>
-    <article>
-      <h1>{{ page.title }}</h1>
-      <span class="secondary">
-        <time datetime="{{ page.date | date_to_xmlschema }}">
-          {{ page.date | date: "%B %-d, %Y" }}
-        </time>
-        • {{ page.author }} • <a href="{{ '/' | relative_url }}">☆ dreamscape ☆</a>
-      </span>
+    <blg-article>
+      <header>
+        <h1 innerText="{Binding title}"></h1>
+        <p>
+          <time attr.datetime="{Binding publishDate}" innerText="{Binding publishDisplayDate}">
+          </time>
+          -
+          <span innerText="{Binding author}"></span>
+          -
+          <a attr.href="{Destination HomePage}">☆ dreamscape ☆</a>
+        </p>
+      </header>
+    </blg-article>
 
-      {{ content }}
-    </article>
+    <hr>
   </main>
 
-
   <footer>
-    <br>
-    <hr>
-    <br>
+    <blg-previous-post>
+      <a attr.href="{Binding url}" attr.title="{Binding title}">
+        <small>previous post</small>
+        <p innerText="{Binding title}"></p>
+      </a>
+    </blg-previous-post>
 
-    {%- if page.previous.url -%}
-    <a href="{{ page.previous.url | relative_url }}" title="{{ page.previous.title }}">
-      <p class="secondary" no-margin>previous post</p>
-      <p no-margin>&lt; {{ page.previous.title }}</p>
-    </a>
-    {%- endif -%}
-
-    {%- if page.next.url -%}
-    <a href="{{ page.next.url | relative_url }}" title="{{ page.next.title }}" text-rightalign>
-      <p class="secondary" no-margin>next post</p>
-      <p no-margin>{{ page.next.title }} &gt;</p>
-    </a>
-    {%- endif -%}
+    <blg-next-post>
+      <a attr.href="{Binding url}" attr.title="{Binding title}">
+        <small>next post</small>
+        <p innerText="{Binding title}"></p>
+      </a>
+    </blg-next-post>
   </footer>
 </body>
 
