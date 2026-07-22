@@ -1,9 +1,9 @@
 ---
-layout: post
-short_title: Fixing Node's Relative Module Imports
-title: Fixing Node's Relative Module Imports
+created: 2024-10-23
 author: yourordinarycat
 ---
+
+# Fixing Node's Relative Module Imports
 
 I bet you hate how this looks as much as I do:
 
