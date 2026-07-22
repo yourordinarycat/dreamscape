@@ -1,0 +1,11 @@
+{
+    "title": "☆ dreamscape ☆",
+    "author": "yourordinarycat",
+    "defaultLanguage": "en-US",
+    "icons": {
+        "baseUrl": "https://media.yourordinarycat.com/dreamscape",
+        "ico": "favicon.ico",
+        "svg": "icon.svg",
+        "apple-touch-icon": "apple-touch-icon.png"
+    }
+}
