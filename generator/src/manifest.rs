@@ -8,6 +8,7 @@ pub struct Manifest {
     pub title: String,
     pub author: String,
     pub default_language: String,
+    pub default_layout: String,
     pub base_path: Option<String>,
 }
 

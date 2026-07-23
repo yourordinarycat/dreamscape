@@ -1,8 +1,10 @@
-mod resources;
 mod manifest;
+mod posts;
+mod resources;
 
-use resources::create_resource_map;
 use manifest::load_manifest;
+use posts::get_posts;
+use resources::create_resource_map;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cwd = std::env::current_dir()?;
@@ -13,7 +15,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let manifest = load_manifest(cwd.join("manifest.json"))?;
     println!("Manifest: {:#?}", manifest);
 
-    if let Some(base_path) = manifest.base_path {
+    if let Some(base_path) = &manifest.base_path {
         out_dir.push(base_path);
     }
 
@@ -21,14 +23,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let resources_dir = cwd.join("resources");
     let out_resources_dir = out_dir.join("resources");
 
-    println!("Resources directory: {}", out_resources_dir.to_str().unwrap().to_owned());
-
-    // 2.1. Copy directory
-    let resource_map = create_resource_map(
-        &resources_dir,
-        &out_resources_dir,
-        &base_out_dir)?;
+    let resource_map = create_resource_map(&resources_dir, &out_resources_dir, &base_out_dir)?;
     println!("Resources: {:#?}", resource_map);
+
+    // 3. Get posts
+    let posts_dir = cwd.join("posts");
+    let posts = get_posts(posts_dir, &manifest)?;
+    println!("Posts: {:#?}", posts);
 
     Ok(())
 }
