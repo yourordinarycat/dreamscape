@@ -1,7 +1,9 @@
+mod layouts;
 mod manifest;
 mod posts;
 mod resources;
 
+use layouts::get_layouts;
 use manifest::load_manifest;
 use posts::get_posts;
 use resources::create_resource_map;
@@ -30,6 +32,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let posts_dir = cwd.join("posts");
     let posts = get_posts(posts_dir, &manifest)?;
     println!("Posts: {:#?}", posts);
+
+    // 4. Get layouts
+    let layouts_dir = cwd.join("layouts");
+    let layouts = get_layouts(layouts_dir);
+    println!("Layouts: {:#?}", layouts);
 
     Ok(())
 }
