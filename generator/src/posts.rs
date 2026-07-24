@@ -1,6 +1,8 @@
 use crate::manifest::Manifest;
+use icu::calendar::{Date, Iso, types::Month};
+use indexmap::IndexMap;
 use serde::Deserialize;
-use std::{collections::HashMap, fs, path::Path};
+use std::{fs, path::Path};
 use thiserror::Error;
 use walkdir::WalkDir;
 
@@ -17,12 +19,13 @@ pub struct FrontMatter {
 
 #[derive(Debug)]
 pub struct Post {
+    pub id: String,
     pub title: String,
     pub short_title: String,
     pub author: String,
 
-    pub created: String,
-    pub updated: String,
+    pub created: Date<Iso>,
+    pub updated: Date<Iso>,
     pub content: String,
     pub layout: String,
     pub default: bool,
@@ -34,6 +37,20 @@ pub enum FrontMatterParseError {
     ParseError(#[from] yaml_serde::Error),
     #[error("The file doesn't have a valid front matter: {0}")]
     ErrorMessage(String),
+}
+
+fn parse_iso_date(date_str: &str) -> Result<Date<Iso>, &'static str> {
+    let parts: Vec<&str> = date_str.split('-').collect();
+    if parts.len() != 3 {
+        return Err("Invalid format, expected YYYY-MM-DD");
+    }
+
+    let year: i32 = parts[0].parse().map_err(|_| "Invalid year.")?;
+    let month_val: u8 = parts[1].parse().map_err(|_| "Invalid month.")?;
+    let day: u8 = parts[2].parse().map_err(|_| "Invalid day.")?;
+
+    Date::try_new(year.into(), Month::new(month_val), day, Iso)
+        .map_err(|_| "Out of range date values")
 }
 
 fn extract_front_matter(content: &str) -> Result<FrontMatter, FrontMatterParseError> {
@@ -57,9 +74,8 @@ fn extract_front_matter(content: &str) -> Result<FrontMatter, FrontMatterParseEr
 pub fn get_posts(
     src: impl AsRef<Path>,
     manifest: &Manifest,
-) -> Result<HashMap<String, Post>, Box<dyn std::error::Error>> {
-    let mut map: HashMap<String, Post> = HashMap::new();
-
+) -> Result<IndexMap<String, Post>, Box<dyn std::error::Error>> {
+    let mut vec: Vec<Post> = Vec::new();
     let src = src.as_ref();
 
     let custom_options = markdown::Options {
@@ -94,22 +110,46 @@ pub fn get_posts(
             .expect("Failed to convert string to UTF-8.")
             .to_string();
 
+        let created = parse_iso_date(&metadata.created)?;
+        let updated = if let Some(updated_at) = metadata.updated {
+            parse_iso_date(&updated_at)?
+        } else {
+            created
+        };
+
         let short_title = metadata
             .short_title
             .unwrap_or_else(|| metadata.title.clone());
         let default = id == "index";
 
-        map.insert(id, Post {
+        vec.push(Post {
+            id,
             title: metadata.title,
             short_title,
             author: metadata.author.unwrap_or(manifest.author.clone()),
-            updated: metadata.updated.unwrap_or(metadata.created.clone()),
-            created: metadata.created,
+            created,
+            updated,
             content: html_output,
             layout: metadata.layout.unwrap_or(manifest.default_layout.clone()),
             default,
         });
     }
 
+    let mut map: IndexMap<String, Post> = IndexMap::new();
+    vec.sort_by(|a, b| {
+        let is_a_default = a.default;
+        let is_b_default = b.default;
+
+        match (is_a_default, is_b_default) {
+            (true, true) => std::cmp::Ordering::Equal,
+            (true, false) => std::cmp::Ordering::Greater,
+            (false, true) => std::cmp::Ordering::Less,
+            (false, false) => b.created.cmp(&a.created),
+        }
+    });
+
+    for elm in vec {
+        map.insert(elm.id.clone(), elm);
+    }
     Ok(map)
 }
