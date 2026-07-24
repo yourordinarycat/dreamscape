@@ -35,7 +35,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 4. Get layouts
     let layouts_dir = cwd.join("layouts");
-    let layouts = get_layouts(layouts_dir);
+    let layouts = get_layouts(layouts_dir)?;
     println!("Layouts: {:#?}", layouts);
 
     Ok(())
