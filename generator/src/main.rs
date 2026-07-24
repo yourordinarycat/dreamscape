@@ -4,6 +4,8 @@ mod manifest;
 mod posts;
 mod resources;
 
+use std::fs;
+
 use layouts::get_layouts;
 use manifest::load_manifest;
 use posts::get_posts;
@@ -12,6 +14,8 @@ use resources::create_resource_map;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cwd = std::env::current_dir()?;
     let base_out_dir = cwd.join("dist");
+    fs::remove_dir_all(&base_out_dir)?;
+
     let mut out_dir = base_out_dir.clone();
 
     // 1. Process manifest
