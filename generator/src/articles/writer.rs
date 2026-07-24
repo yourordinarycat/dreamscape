@@ -22,7 +22,7 @@ use crate::{
     },
     layouts::Layout,
     manifest::Manifest,
-    resources::normalize_to_href,
+    resources::href,
 };
 
 fn apply_directives<'a>(
@@ -201,7 +201,7 @@ fn process_common_binding(
             &manifest.default_language,
         )),
         "language" => Some(manifest.default_language.clone()),
-        "url" => Some(normalize_to_href(&make_article_full_path(
+        "url" => Some(href::normalize(&make_article_full_path(
             manifest, article, true,
         ))),
         _ => None,
@@ -297,7 +297,7 @@ fn process_destination(
         .expect("Destination references an article that doesn't exist.");
 
     let full_path = make_article_full_path(manifest, &referenced_article, true);
-    apply_directive(node, directive, &normalize_to_href(&full_path));
+    apply_directive(node, directive, &href::normalize(&full_path));
 }
 
 fn process_resource(node: &Selection, directive: &Directive, resources: &HashMap<String, String>) {

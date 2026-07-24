@@ -8,7 +8,6 @@ use std::fs;
 
 use layouts::get_layouts;
 use manifest::load_manifest;
-use resources::create_resource_map;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cwd = std::env::current_dir()?;
@@ -28,7 +27,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let resources_dir = cwd.join("resources");
     let out_resources_dir = out_dir.join("resources");
 
-    let resource_map = create_resource_map(&resources_dir, &out_resources_dir, &base_out_dir)?;
+    let resource_map =
+        resources::discovery::find_all(&resources_dir, &out_resources_dir, &base_out_dir)?;
 
     // 3. Get articles
     let articles_dir = cwd.join("articles");
