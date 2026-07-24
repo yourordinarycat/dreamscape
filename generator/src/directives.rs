@@ -1,5 +1,12 @@
 pub mod connection;
+pub mod context;
 pub mod html;
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum DirectiveContext {
+    Page,
+    Article,
+}
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum DirectiveKind {

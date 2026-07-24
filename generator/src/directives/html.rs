@@ -1,6 +1,11 @@
 use dom_query::Selection;
 
-use super::{Directive, DirectiveKind, TargetKind};
+use super::{
+    Directive, DirectiveContext, DirectiveKind, TargetKind,
+    context::{
+        BLG_ARTICLE_LIST_TAG, BLG_ARTICLE_TAG, BLG_NEXT_ARTICLE_TAG, BLG_PREVIOUS_ARTICLE_TAG,
+    },
+};
 
 fn remove_first_and_last(s: &str) -> &str {
     let mut chars = s.chars();
@@ -66,4 +71,19 @@ pub fn from_node(node: &Selection) -> impl Iterator<Item = Directive> {
 
         parsed
     })
+}
+
+pub fn get_directive_context(node: &Selection) -> DirectiveContext {
+    let relevant_ancestor = node.ancestors(None).iter().any(|ancestor| {
+        ancestor.is(BLG_ARTICLE_TAG)
+            || ancestor.is(BLG_ARTICLE_LIST_TAG)
+            || ancestor.is(BLG_PREVIOUS_ARTICLE_TAG)
+            || ancestor.is(BLG_NEXT_ARTICLE_TAG)
+    });
+
+    if relevant_ancestor {
+        DirectiveContext::Article
+    } else {
+        DirectiveContext::Page
+    }
 }

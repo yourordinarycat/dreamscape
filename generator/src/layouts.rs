@@ -2,18 +2,20 @@ use dom_query::Document;
 use std::{collections::HashMap, fs, path::Path};
 use walkdir::WalkDir;
 
-use crate::directives::{self, Directive, connection::CONNECTION_ID_ATTR};
+use crate::directives::{
+    self, Directive, DirectiveContext, connection::CONNECTION_ID_ATTR, html::get_directive_context,
+};
 
 #[derive(Debug)]
 pub struct Layout {
     pub name: String,
     pub content: String,
-    pub directives: HashMap<u8, Vec<Directive>>,
+    pub directives: HashMap<u8, (DirectiveContext, Vec<Directive>)>,
 }
 
 fn process_layout(name: &str, content: &str) -> Result<Layout, Box<dyn std::error::Error>> {
     let document = Document::from(content);
-    let mut directive_map: HashMap<u8, Vec<Directive>> = HashMap::new();
+    let mut directive_map: HashMap<u8, (DirectiveContext, Vec<Directive>)> = HashMap::new();
     let mut curr_cid: u8 = 0;
 
     let nodes = document.select("*").iter();
@@ -22,7 +24,8 @@ fn process_layout(name: &str, content: &str) -> Result<Layout, Box<dyn std::erro
         let directives: Vec<_> = directives::html::from_node(&node).collect();
 
         if directives.len() > 0 {
-            directive_map.insert(curr_cid, directives);
+            let context = get_directive_context(&node);
+            directive_map.insert(curr_cid, (context, directives));
 
             node.set_attr(CONNECTION_ID_ATTR, &curr_cid.to_string());
             curr_cid += 1;
