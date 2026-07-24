@@ -8,12 +8,11 @@ use crate::directives::{
 
 #[derive(Debug)]
 pub struct Layout {
-    pub name: String,
     pub content: String,
     pub directives: HashMap<u8, (DirectiveContext, Vec<Directive>)>,
 }
 
-fn process_layout(name: &str, content: &str) -> Result<Layout, Box<dyn std::error::Error>> {
+fn process_layout(content: &str) -> Result<Layout, Box<dyn std::error::Error>> {
     let document = Document::from(content);
     let mut directive_map: HashMap<u8, (DirectiveContext, Vec<Directive>)> = HashMap::new();
     let mut curr_cid: u8 = 0;
@@ -33,14 +32,13 @@ fn process_layout(name: &str, content: &str) -> Result<Layout, Box<dyn std::erro
     }
 
     Ok(Layout {
-        name: name.to_string(),
         content: document.html().to_string(),
         directives: directive_map,
     })
 }
 
-pub fn get_layouts(src: impl AsRef<Path>) -> Result<Vec<Layout>, Box<dyn std::error::Error>> {
-    let mut vec: Vec<Layout> = Vec::new();
+pub fn get_layouts(src: impl AsRef<Path>) -> Result<HashMap<String, Layout>, Box<dyn std::error::Error>> {
+    let mut map: HashMap<String, Layout> = HashMap::new();
 
     let src = src.as_ref();
 
@@ -60,9 +58,9 @@ pub fn get_layouts(src: impl AsRef<Path>) -> Result<Vec<Layout>, Box<dyn std::er
             .to_str()
             .expect("Failed to convert file stem to string.");
 
-        let layout = process_layout(name, &content)?;
-        vec.push(layout);
+        let layout = process_layout(&content)?;
+        map.insert(name.to_string(), layout);
     }
 
-    Ok(vec)
+    Ok(map)
 }
