@@ -189,6 +189,7 @@ fn process_common_binding(
     article: &Article,
 ) -> Option<String> {
     match directive.source.as_str() {
+        "title" => Some(article.title.clone()),
         "author" => Some(article.author.clone()),
         "publishDate" => Some(format_date(&article.created)),
         "publishDisplayDate" => Some(format_date_display(
@@ -214,16 +215,7 @@ fn process_article_binding(
     manifest: &Manifest,
     article: &Article,
 ) {
-    let value_opt = match directive.source.as_str() {
-        "title" => {
-            if article.default {
-                Some(manifest.title.clone())
-            } else {
-                Some(article.title.clone())
-            }
-        }
-        _ => process_common_binding(directive, manifest, article),
-    };
+    let value_opt = process_common_binding(directive, manifest, article);
 
     if let Some(value) = value_opt {
         apply_directive(node, directive, &value);
@@ -237,7 +229,7 @@ fn process_page_binding(
     article: &Article,
 ) {
     let value_opt = match directive.source.as_str() {
-        "title" => {
+        "pageTitle" => {
             if article.default {
                 Some(manifest.title.clone())
             } else {
