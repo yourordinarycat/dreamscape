@@ -1,6 +1,7 @@
 mod directives;
 mod layouts;
 mod manifest;
+mod post_writer;
 mod posts;
 mod resources;
 
@@ -8,6 +9,7 @@ use std::fs;
 
 use layouts::get_layouts;
 use manifest::load_manifest;
+use post_writer::write_posts;
 use posts::get_posts;
 use resources::create_resource_map;
 
@@ -42,6 +44,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let layouts_dir = cwd.join("layouts");
     let layouts = get_layouts(layouts_dir)?;
     println!("Layouts: {:#?}", layouts);
+
+    // 5. Process posts
+    write_posts(out_dir, &manifest, &posts, &layouts, &resource_map)?;
 
     Ok(())
 }
