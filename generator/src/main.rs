@@ -1,7 +1,7 @@
+mod articles;
 mod directives;
 mod layouts;
 mod manifest;
-mod posts;
 mod resources;
 
 use std::fs;
@@ -30,16 +30,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let resource_map = create_resource_map(&resources_dir, &out_resources_dir, &base_out_dir)?;
 
-    // 3. Get posts
-    let posts_dir = cwd.join("posts");
-    let posts = posts::discovery::find_all(posts_dir, &manifest)?;
+    // 3. Get articles
+    let articles_dir = cwd.join("articles");
+    let articles = articles::discovery::find_all(articles_dir, &manifest)?;
 
     // 4. Get layouts
     let layouts_dir = cwd.join("layouts");
     let layouts = get_layouts(layouts_dir)?;
 
-    // 5. Process posts
-    posts::writer::write_posts(out_dir, &manifest, &posts, &layouts, &resource_map)?;
+    // 5. Process articles
+    articles::writer::write_to(out_dir, &manifest, &articles, &layouts, &resource_map)?;
 
     Ok(())
 }

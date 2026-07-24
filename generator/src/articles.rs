@@ -5,7 +5,7 @@ pub mod writer;
 use icu::calendar::{Date, Iso};
 
 #[derive(Debug)]
-pub struct Post {
+pub struct Article {
     pub id: String,
     pub title: String,
     pub short_title: String,
