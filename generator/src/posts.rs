@@ -1,8 +1,8 @@
+use crate::manifest::Manifest;
 use serde::Deserialize;
-use std::{fs, path::Path};
+use std::{collections::HashMap, fs, path::Path};
 use thiserror::Error;
 use walkdir::WalkDir;
-use crate::manifest::Manifest;
 
 #[derive(Deserialize, Debug)]
 pub struct FrontMatter {
@@ -13,20 +13,19 @@ pub struct FrontMatter {
     pub author: Option<String>,
     pub short_title: Option<String>,
     pub layout: Option<String>,
-    pub default: Option<bool>,
 }
 
 #[derive(Debug)]
 pub struct Post {
     pub title: String,
+    pub short_title: String,
     pub author: String,
+
     pub created: String,
     pub updated: String,
     pub content: String,
     pub layout: String,
     pub default: bool,
-
-    pub short_title: Option<String>,
 }
 
 #[derive(Error, Debug)]
@@ -55,8 +54,11 @@ fn extract_front_matter(content: &str) -> Result<FrontMatter, FrontMatterParseEr
     }
 }
 
-pub fn get_posts(src: impl AsRef<Path>, manifest: &Manifest) -> Result<Vec<Post>, Box<dyn std::error::Error>> {
-    let mut vec: Vec<Post> = Vec::new();
+pub fn get_posts(
+    src: impl AsRef<Path>,
+    manifest: &Manifest,
+) -> Result<HashMap<String, Post>, Box<dyn std::error::Error>> {
+    let mut map: HashMap<String, Post> = HashMap::new();
 
     let src = src.as_ref();
 
@@ -84,18 +86,30 @@ pub fn get_posts(src: impl AsRef<Path>, manifest: &Manifest) -> Result<Vec<Post>
             .expect("Failed to render Markdown to HTML");
 
         let metadata = extract_front_matter(&content)?;
-        
-        vec.push(Post {
+        let id = entry
+            .path()
+            .file_stem()
+            .expect("File stem should not be None.")
+            .to_str()
+            .expect("Failed to convert string to UTF-8.")
+            .to_string();
+
+        let short_title = metadata
+            .short_title
+            .unwrap_or_else(|| metadata.title.clone());
+        let default = id == "index";
+
+        map.insert(id, Post {
             title: metadata.title,
+            short_title,
             author: metadata.author.unwrap_or(manifest.author.clone()),
             updated: metadata.updated.unwrap_or(metadata.created.clone()),
             created: metadata.created,
             content: html_output,
-            short_title: metadata.short_title,
             layout: metadata.layout.unwrap_or(manifest.default_layout.clone()),
-            default: metadata.default.unwrap_or(false)
+            default,
         });
     }
 
-    Ok(vec)
+    Ok(map)
 }
