@@ -1,10 +1,9 @@
 ---
+title: welcome to ☆ dreamscape ☆
 created: 2023-12-22
-shortTitle: welcome
+short_title: welcome
 author: yourordinarycat
 ---
-
-# welcome to ☆ dreamscape ☆
 
 A tiny little blog, about as irrelevant as I am. I've always struggled to keep up with this kind of thing after a while, so I thank Jekyll & GitHub for making it so easy to create and add content to this blog. Some fun facts:
 

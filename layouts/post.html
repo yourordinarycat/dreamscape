@@ -4,7 +4,7 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta charset="utf-8">
-  <title innerText="{Binding title}"></title>
+  <title content="{Binding title}"></title>
   <meta name="author" attr.content="{Binding author}">
 
   <link attr.href="{StaticResource BasePageStyle}" rel="stylesheet">
@@ -17,14 +17,14 @@
   <main>
     <blg-article>
       <header>
-        <h1 innerText="{Binding title}"></h1>
+        <h1 content="{Binding title}"></h1>
         <p>
-          <time attr.datetime="{Binding publishDate}" innerText="{Binding publishDisplayDate}">
+          <time attr.datetime="{Binding publishDate}" content="{Binding publishDisplayDate}">
           </time>
           -
-          <span innerText="{Binding author}"></span>
+          <span content="{Binding author}"></span>
           -
-          <a attr.href="{Destination HomePage}">☆ dreamscape ☆</a>
+          <a attr.href="{Destination index}">☆ dreamscape ☆</a>
         </p>
       </header>
     </blg-article>
@@ -36,14 +36,14 @@
     <blg-previous-post>
       <a attr.href="{Binding url}" attr.title="{Binding title}">
         <small>previous post</small>
-        <p innerText="{Binding title}"></p>
+        <p content="{Binding title}"></p>
       </a>
     </blg-previous-post>
 
     <blg-next-post>
       <a attr.href="{Binding url}" attr.title="{Binding title}">
         <small>next post</small>
-        <p innerText="{Binding title}"></p>
+        <p content="{Binding title}"></p>
       </a>
     </blg-next-post>
   </footer>
