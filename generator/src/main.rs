@@ -19,7 +19,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 1. Process manifest
     let manifest = load_manifest(cwd.join("manifest.json"))?;
-    println!("Manifest: {:#?}", manifest);
 
     if let Some(base_path) = &manifest.base_path {
         out_dir.push(base_path);
@@ -30,17 +29,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let out_resources_dir = out_dir.join("resources");
 
     let resource_map = create_resource_map(&resources_dir, &out_resources_dir, &base_out_dir)?;
-    println!("Resources: {:#?}", resource_map);
 
     // 3. Get posts
     let posts_dir = cwd.join("posts");
     let posts = posts::discovery::find_all(posts_dir, &manifest)?;
-    println!("Posts: {:#?}", posts);
 
     // 4. Get layouts
     let layouts_dir = cwd.join("layouts");
     let layouts = get_layouts(layouts_dir)?;
-    println!("Layouts: {:#?}", layouts);
 
     // 5. Process posts
     posts::writer::write_posts(out_dir, &manifest, &posts, &layouts, &resource_map)?;
