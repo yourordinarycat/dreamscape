@@ -46,14 +46,14 @@ fn load_resource_mapping(
     Ok(resource_map)
 }
 
-fn normalize_to_href(path: &Path) -> String {
+pub fn normalize_to_href(path: &Path) -> String {
     let mut href = path
         .to_str()
         .expect("Something went wrong converting the path to a string.")
         .replace('\\', "/");
 
     if !href.starts_with('/')  {
-        href = format!("/{}", href);
+        href.insert(0, '/')
     }
 
     href
