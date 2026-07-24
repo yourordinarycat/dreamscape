@@ -2,5 +2,6 @@
     "title": "☆ dreamscape ☆",
     "author": "yourordinarycat",
     "default_language": "en-US",
-    "base_path": "dreamscape"
+    "base_path": "dreamscape",
+    "default_layout": "post"
 }

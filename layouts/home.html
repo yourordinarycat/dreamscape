@@ -4,7 +4,7 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta charset="utf-8">
-  <title innerText="{Binding title}"></title>
+  <title content="{Binding title}"></title>
 
   <link attr.href="{StaticResource HomePageStyle}" rel="stylesheet">
   <link rel="icon" attr.href="{StaticResource FaviconIco}" sizes="32x32">
@@ -15,6 +15,17 @@
 <body>
   <main>
     <blg-article></blg-article>
+
+    <blg-article-list>
+      <h3>
+        <a attr.href="{Binding url}" content="{Binding title}"></a>
+      </h3>
+      <span>
+        <time attr.datetime="{Binding publishDate}" content="{Binding publishDisplayDate}"></time>
+        -
+        <span content="{Binding author}"></span>
+      </span>
+    </blg-article-list>
 
     <hr>
   </main>
