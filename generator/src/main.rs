@@ -1,3 +1,4 @@
+mod directives;
 mod layouts;
 mod manifest;
 mod posts;
