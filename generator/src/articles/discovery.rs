@@ -4,7 +4,7 @@ use icu::calendar::{Date, Iso, types::Month};
 use indexmap::IndexMap;
 use walkdir::WalkDir;
 
-use crate::{manifest::Manifest, posts::{Post, frontmatter::extract_front_matter}};
+use crate::{manifest::Manifest, articles::{Article, frontmatter::extract_front_matter}};
 
 fn parse_iso_date(date_str: &str) -> Result<Date<Iso>, &'static str> {
     let parts: Vec<&str> = date_str.split('-').collect();
@@ -23,8 +23,8 @@ fn parse_iso_date(date_str: &str) -> Result<Date<Iso>, &'static str> {
 pub fn find_all(
     src: impl AsRef<Path>,
     manifest: &Manifest,
-) -> Result<IndexMap<String, Post>, Box<dyn std::error::Error>> {
-    let mut vec: Vec<Post> = Vec::new();
+) -> Result<IndexMap<String, Article>, Box<dyn std::error::Error>> {
+    let mut vec: Vec<Article> = Vec::new();
     let src = src.as_ref();
 
     let custom_options = markdown::Options {
@@ -71,7 +71,7 @@ pub fn find_all(
             .unwrap_or_else(|| metadata.title.clone());
         let default = id == "index";
 
-        vec.push(Post {
+        vec.push(Article {
             id,
             title: metadata.title,
             short_title,
@@ -84,7 +84,7 @@ pub fn find_all(
         });
     }
 
-    let mut map: IndexMap<String, Post> = IndexMap::new();
+    let mut map: IndexMap<String, Article> = IndexMap::new();
     vec.sort_by(|a, b| {
         let is_a_default = a.default;
         let is_b_default = b.default;

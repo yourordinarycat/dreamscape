@@ -12,6 +12,7 @@ use std::{
 };
 
 use crate::{
+    articles::Article,
     directives::{
         Directive, DirectiveContext, DirectiveKind, TargetKind,
         connection::{CONNECTION_ID_ATTR, CONNECTION_ID_ATTR_SELECTOR},
@@ -21,16 +22,15 @@ use crate::{
     },
     layouts::Layout,
     manifest::Manifest,
-    posts::Post,
     resources::normalize_to_href,
 };
 
 fn apply_directives<'a>(
     nodes: impl Iterator<Item = Selection<'a>>,
     manifest: &Manifest,
-    post: &Post,
+    article: &Article,
     layout: &Layout,
-    posts: &IndexMap<String, Post>,
+    articles: &IndexMap<String, Article>,
     resources: &HashMap<String, String>,
 ) {
     for node in nodes {
@@ -43,13 +43,13 @@ fn apply_directives<'a>(
             match directive.kind {
                 DirectiveKind::Binding => {
                     if *context == DirectiveContext::Page {
-                        process_page_binding(&node, directive, manifest, post)
+                        process_page_binding(&node, directive, manifest, article)
                     } else {
-                        process_article_binding(&node, directive, manifest, post)
+                        process_article_binding(&node, directive, manifest, article)
                     }
                 }
                 DirectiveKind::Destination => {
-                    process_destination(&node, directive, posts, manifest)
+                    process_destination(&node, directive, articles, manifest)
                 }
                 DirectiveKind::StaticResource => process_resource(&node, directive, resources),
             };
@@ -57,19 +57,19 @@ fn apply_directives<'a>(
     }
 }
 
-fn process_post(
+fn process_article(
     manifest: &Manifest,
-    post: &Post,
+    article: &Article,
     layout: &Layout,
-    posts: &IndexMap<String, Post>,
+    articles: &IndexMap<String, Article>,
     resources: &HashMap<String, String>,
 ) -> Result<String, Box<dyn std::error::Error>> {
     let document = Document::from(&*layout.content);
 
     let article_nodes = document.select(BLG_ARTICLE_TAG).iter();
     for node in article_nodes {
-        let html = Document::from(&*post.content).html();
-        if !post.default {
+        let html = Document::from(&*article.content).html();
+        if !article.default {
             node.rename("article");
             node.append_html(html);
         } else {
@@ -77,10 +77,10 @@ fn process_post(
         }
     }
 
-    let prev_idx = posts.get_index_of(&post.id).unwrap() + 1;
+    let prev_idx = articles.get_index_of(&article.id).unwrap() + 1;
     let prev_article_nodes = document.select(BLG_PREVIOUS_ARTICLE_TAG);
 
-    if let Some((_, previous)) = posts.get_index(prev_idx)
+    if let Some((_, previous)) = articles.get_index(prev_idx)
         && !previous.default
     {
         for node in prev_article_nodes.iter() {
@@ -89,7 +89,7 @@ fn process_post(
                 manifest,
                 previous,
                 layout,
-                posts,
+                articles,
                 resources,
             );
 
@@ -99,11 +99,11 @@ fn process_post(
         prev_article_nodes.remove();
     }
 
-    let next_idx_opt = posts.get_index_of(&post.id).unwrap().checked_sub(1);
+    let next_idx_opt = articles.get_index_of(&article.id).unwrap().checked_sub(1);
     let next_article_nodes = document.select(BLG_NEXT_ARTICLE_TAG);
 
     if let Some(next_idx) = next_idx_opt
-        && let Some((_, next)) = posts.get_index(next_idx)
+        && let Some((_, next)) = articles.get_index(next_idx)
         && !next.default
     {
         for node in next_article_nodes.iter() {
@@ -112,7 +112,7 @@ fn process_post(
                 manifest,
                 next,
                 layout,
-                posts,
+                articles,
                 resources,
             );
 
@@ -130,7 +130,7 @@ fn process_post(
         let template = node.inner_html();
         node.children().remove();
 
-        for (_, article) in posts {
+        for (_, article) in articles {
             if article.default {
                 continue;
             }
@@ -145,7 +145,7 @@ fn process_post(
                 manifest,
                 article,
                 layout,
-                posts,
+                articles,
                 resources,
             );
         }
@@ -153,7 +153,7 @@ fn process_post(
 
     // Process remaining elements with connection IDs
     let nodes = document.select(CONNECTION_ID_ATTR_SELECTOR).iter();
-    apply_directives(nodes, manifest, post, layout, posts, resources);
+    apply_directives(nodes, manifest, article, layout, articles, resources);
 
     Ok(document.html().to_string())
 }
@@ -186,23 +186,23 @@ fn format_date_display(date: &Date<Iso>, locale_str: &str) -> String {
 fn process_common_binding(
     directive: &Directive,
     manifest: &Manifest,
-    post: &Post,
+    article: &Article,
 ) -> Option<String> {
     match directive.source.as_str() {
-        "author" => Some(post.author.clone()),
-        "publishDate" => Some(format_date(&post.created)),
+        "author" => Some(article.author.clone()),
+        "publishDate" => Some(format_date(&article.created)),
         "publishDisplayDate" => Some(format_date_display(
-            &post.created,
+            &article.created,
             &manifest.default_language,
         )),
-        "updateDate" => Some(format_date(&post.updated)),
+        "updateDate" => Some(format_date(&article.updated)),
         "updateDisplayDate" => Some(format_date_display(
-            &post.updated,
+            &article.updated,
             &manifest.default_language,
         )),
         "language" => Some(manifest.default_language.clone()),
-        "url" => Some(normalize_to_href(&make_post_full_path(
-            manifest, post, true,
+        "url" => Some(normalize_to_href(&make_article_full_path(
+            manifest, article, true,
         ))),
         _ => None,
     }
@@ -212,17 +212,17 @@ fn process_article_binding(
     node: &Selection,
     directive: &Directive,
     manifest: &Manifest,
-    post: &Post,
+    article: &Article,
 ) {
     let value_opt = match directive.source.as_str() {
         "title" => {
-            if post.default {
+            if article.default {
                 Some(manifest.title.clone())
             } else {
-                Some(post.title.clone())
+                Some(article.title.clone())
             }
         }
-        _ => process_common_binding(directive, manifest, post),
+        _ => process_common_binding(directive, manifest, article),
     };
 
     if let Some(value) = value_opt {
@@ -230,16 +230,21 @@ fn process_article_binding(
     }
 }
 
-fn process_page_binding(node: &Selection, directive: &Directive, manifest: &Manifest, post: &Post) {
+fn process_page_binding(
+    node: &Selection,
+    directive: &Directive,
+    manifest: &Manifest,
+    article: &Article,
+) {
     let value_opt = match directive.source.as_str() {
         "title" => {
-            if post.default {
+            if article.default {
                 Some(manifest.title.clone())
             } else {
-                Some(format!("{} - {}", post.short_title, manifest.title))
+                Some(format!("{} - {}", article.short_title, manifest.title))
             }
         }
-        _ => process_common_binding(directive, manifest, post),
+        _ => process_common_binding(directive, manifest, article),
     };
 
     if let Some(value) = value_opt {
@@ -247,47 +252,51 @@ fn process_page_binding(node: &Selection, directive: &Directive, manifest: &Mani
     }
 }
 
-fn make_post_path(post: &Post, default_is_empty: bool) -> PathBuf {
-    if post.default {
+fn make_article_path(article: &Article, default_is_empty: bool) -> PathBuf {
+    if article.default {
         if default_is_empty {
             PathBuf::new()
         } else {
             Path::new("index.html").to_path_buf()
         }
     } else {
-        let mut id = post.id.to_string();
+        let mut id = article.id.to_string();
         id.push_str(".html");
 
         let mut buf = PathBuf::new();
-        buf.push(format_date(&post.created).replace('-', "/"));
+        buf.push(format_date(&article.created).replace('-', "/"));
         buf.push(id);
 
         buf
     }
 }
 
-fn make_post_full_path(manifest: &Manifest, post: &Post, default_is_empty: bool) -> PathBuf {
-    let post_path = make_post_path(&post, default_is_empty);
+fn make_article_full_path(
+    manifest: &Manifest,
+    article: &Article,
+    default_is_empty: bool,
+) -> PathBuf {
+    let article_path = make_article_path(&article, default_is_empty);
 
     if let Some(base_url) = &manifest.base_path {
         let base_path = Path::new(base_url);
-        base_path.join(post_path)
+        base_path.join(article_path)
     } else {
-        post_path
+        article_path
     }
 }
 
 fn process_destination(
     node: &Selection,
     directive: &Directive,
-    posts: &IndexMap<String, Post>,
+    articles: &IndexMap<String, Article>,
     manifest: &Manifest,
 ) {
-    let referenced_post = posts
+    let referenced_article = articles
         .get(&directive.source)
-        .expect("Destination references a post that doesn't exist.");
+        .expect("Destination references an article that doesn't exist.");
 
-    let full_path = make_post_full_path(manifest, &referenced_post, true);
+    let full_path = make_article_full_path(manifest, &referenced_article, true);
     apply_directive(node, directive, &normalize_to_href(&full_path));
 }
 
@@ -299,19 +308,19 @@ fn process_resource(node: &Selection, directive: &Directive, resources: &HashMap
     apply_directive(node, directive, value);
 }
 
-pub fn write_posts(
+pub fn write_to(
     dst: impl AsRef<Path>,
     manifest: &Manifest,
-    posts: &IndexMap<String, Post>,
+    articles: &IndexMap<String, Article>,
     layouts: &HashMap<String, Layout>,
     resources: &HashMap<String, String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let dst = dst.as_ref();
 
-    for (_, post) in posts {
-        if let Some(layout) = layouts.get(&post.layout) {
-            let content = process_post(manifest, post, layout, posts, resources)?;
-            let path = dst.join(make_post_path(post, false));
+    for (_, article) in articles {
+        if let Some(layout) = layouts.get(&article.layout) {
+            let content = process_article(manifest, article, layout, articles, resources)?;
+            let path = dst.join(make_article_path(article, false));
 
             if let Some(parent) = path.parent() {
                 fs::create_dir_all(parent)?;
@@ -319,7 +328,7 @@ pub fn write_posts(
 
             fs::write(path, content)?;
         } else {
-            println!("Unable to find layout {}", post.layout);
+            println!("Unable to find layout {}", article.layout);
         }
     }
 
