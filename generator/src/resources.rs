@@ -17,7 +17,6 @@ fn load_resource_mapping(
 ) -> Result<HashMap<String, String>, Box<dyn std::error::Error>> {
     let file_contents = fs::read_to_string(&src)?;
     let record: HashMap<String, ResourceValue> = serde_json::from_str(&file_contents)?;
-    println!("Loading resource map: {:#?}", record);
 
     let mut resource_map: HashMap<String, String> = HashMap::new();
 
@@ -52,7 +51,7 @@ pub fn normalize_to_href(path: &Path) -> String {
         .expect("Something went wrong converting the path to a string.")
         .replace('\\', "/");
 
-    if !href.starts_with('/')  {
+    if !href.starts_with('/') {
         href.insert(0, '/')
     }
 
@@ -111,10 +110,7 @@ pub fn create_resource_map(
         let target = dst_path.strip_prefix(base_dst)?;
 
         // TODO: Duplicate check
-        resource_map.insert(
-            key.to_str().unwrap().to_owned(),
-            normalize_to_href(target),
-        );
+        resource_map.insert(key.to_str().unwrap().to_owned(), normalize_to_href(target));
     }
 
     Ok(resource_map)

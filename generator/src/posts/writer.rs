@@ -94,7 +94,6 @@ fn process_post(
             );
 
             node.replace_with_selection(&node.children());
-            println!("Before {}: {}", post.id, previous.id);
         }
     } else {
         prev_article_nodes.remove();
@@ -118,7 +117,6 @@ fn process_post(
             );
 
             node.replace_with_selection(&node.children());
-            println!("After {}: {}", post.id, next.id);
         }
     } else {
         next_article_nodes.remove();
@@ -154,7 +152,6 @@ fn process_post(
     }
 
     // Process remaining elements with connection IDs
-    println!("{}", document.html().to_string());
     let nodes = document.select(CONNECTION_ID_ATTR_SELECTOR).iter();
     apply_directives(nodes, manifest, post, layout, posts, resources);
 
