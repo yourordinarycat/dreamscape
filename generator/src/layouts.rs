@@ -1,5 +1,4 @@
-use html5ever::{LocalName, QualName, ns};
-use scraper::{Html, Selector, node::Element, node::Node};
+use dom_query::Document;
 use std::{collections::HashMap, fs, path::Path};
 use walkdir::WalkDir;
 
@@ -81,52 +80,38 @@ fn parse_directive(key: &str, value: &str) -> Option<Directive> {
 }
 
 fn process_layout(name: &str, content: &str) -> Result<Layout, Box<dyn std::error::Error>> {
-    let mut dom = Html::parse_document(content);
-    let selector = Selector::parse("*").unwrap();
-    let nodes: Vec<_> = dom.select(&selector).map(|x| x.id()).collect();
-
+    let document = Document::from(content);
     let mut directive_map: HashMap<u8, Vec<Directive>> = HashMap::new();
     let mut curr_cid: u8 = 0;
 
-    for node_id in nodes {
-        let mut node_mut = dom.tree.get_mut(node_id).unwrap();
-        let node_val: &mut Node = node_mut.value();
+    let nodes = document.select("*").iter();
 
-        let elm: Option<&mut Element> = match node_val {
-            Node::Element(e) => Some(e),
-            _ => None,
-        };
+    for node in nodes {
+        let mut directives: Vec<Directive> = Vec::new();
 
-        if let Some(element) = elm {
-            let mut directives: Vec<Directive> = Vec::new();
-            let attrs_mut = &mut element.attrs;
-
-            attrs_mut.retain_mut(|(name, value)| {
-                let parsed_directive = parse_directive(&name.local, value);
-
-                if let Some(directive) = parsed_directive {
-                    directives.push(directive);
-                    false
-                } else {
-                    true
-                }
-            });
-
-            if directives.len() > 0 {
-                directive_map.insert(curr_cid, directives);
-
-                let attr_name =
-                    QualName::new(None, ns!(), LocalName::from("data-blg-connection-id"));
-
-                attrs_mut.push((attr_name, curr_cid.to_string().into()));
-                curr_cid += 1;
+        for attr in node.attrs() {
+            let name = &attr.name.local;
+            let value = &attr.value;
+            
+            let parsed_directive = parse_directive(name, value);
+    
+            if let Some(directive) = parsed_directive {
+                directives.push(directive);
+                node.remove_attr(name);
             }
+        }
+
+        if directives.len() > 0 {
+            directive_map.insert(curr_cid, directives);
+
+            node.set_attr("data-blg-connection-id", &curr_cid.to_string());
+            curr_cid += 1;
         }
     }
 
     Ok(Layout {
         name: name.to_string(),
-        content: dom.html(),
+        content: document.html().to_string(),
         directives: directive_map,
     })
 }
