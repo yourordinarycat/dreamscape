@@ -2,13 +2,28 @@ use std::collections::HashMap;
 
 use indexmap::IndexMap;
 
-use super::DirectiveContext;
+use super::{DirectiveContext, DirectiveKind};
 use crate::{
     articles::Article,
     directives::{Directive, date, destination},
     manifest::Manifest,
     resources::href,
 };
+
+#[derive(thiserror::Error, Debug)]
+pub enum DirectiveError {
+    #[error("Unable to find article with provided ID: {0}")]
+    ArticleNotFound(String),
+
+    #[error("The path to the provided article could not be converted to UTF-8: {0}")]
+    InvalidArticlePath(String),
+
+    #[error("The source for the provided binding is not valid: {0}")]
+    InvalidBindingSource(String),
+
+    #[error("Unable to find the provided resource: {0}")]
+    StaticResourceNotFound(String),
+}
 
 pub struct BindingContext<'a> {
     pub manifest: &'a Manifest,
@@ -22,13 +37,13 @@ impl<'a> BindingContext<'a> {
         id: &str,
         directive: &Directive,
         context: DirectiveContext,
-    ) -> Option<String> {
+    ) -> Result<String, DirectiveError> {
         match directive.kind {
-            super::DirectiveKind::Binding => {
+            DirectiveKind::Binding => {
                 let article = self
                     .articles
                     .get(id)
-                    .expect("Unable to find article with provided ID");
+                    .ok_or_else(|| DirectiveError::ArticleNotFound(id.to_owned()))?;
 
                 if context == DirectiveContext::Page {
                     process_page_binding(&directive.source, self.manifest, article)
@@ -36,53 +51,65 @@ impl<'a> BindingContext<'a> {
                     process_common_binding(&directive.source, self.manifest, article)
                 }
             }
-            super::DirectiveKind::Destination => {
+            DirectiveKind::Destination => {
                 let referenced_article = self
                     .articles
                     .get(&directive.source)
-                    .expect("Destination references an article that doesn't exist.");
+                    .ok_or_else(|| DirectiveError::ArticleNotFound(directive.source.clone()))?;
 
                 destination::make_article_path(self.manifest, &referenced_article, true)
                     .to_str()
                     .map(String::from)
+                    .ok_or_else(|| {
+                        DirectiveError::InvalidArticlePath(referenced_article.id.clone())
+                    })
             }
-            super::DirectiveKind::StaticResource => self
+            DirectiveKind::StaticResource => self
                 .resources
                 .get(&directive.source)
-                .map(|s| s.to_owned()),
+                .map(|s| s.to_owned())
+                .ok_or_else(|| DirectiveError::StaticResourceNotFound(directive.source.clone())),
         }
     }
 }
 
-fn process_common_binding(source: &str, manifest: &Manifest, article: &Article) -> Option<String> {
+fn process_common_binding(
+    source: &str,
+    manifest: &Manifest,
+    article: &Article,
+) -> Result<String, DirectiveError> {
     match source {
-        "title" => Some(article.title.clone()),
-        "author" => Some(article.author.clone()),
-        "publishDate" => Some(date::format_iso(&article.created)),
-        "publishDisplayDate" => Some(date::format_display(
+        "title" => Ok(article.title.clone()),
+        "author" => Ok(article.author.clone()),
+        "publishDate" => Ok(date::format_iso(&article.created)),
+        "publishDisplayDate" => Ok(date::format_display(
             &article.created,
             &manifest.default_language,
         )),
-        "updateDate" => Some(date::format_iso(&article.updated)),
-        "updateDisplayDate" => Some(date::format_display(
+        "updateDate" => Ok(date::format_iso(&article.updated)),
+        "updateDisplayDate" => Ok(date::format_display(
             &article.updated,
             &manifest.default_language,
         )),
-        "language" => Some(manifest.default_language.clone()),
-        "url" => Some(href::normalize(&destination::make_article_path(
+        "language" => Ok(manifest.default_language.clone()),
+        "url" => Ok(href::normalize(&destination::make_article_path(
             manifest, article, true,
         ))),
-        _ => None,
+        _ => Err(DirectiveError::InvalidBindingSource(source.to_owned())),
     }
 }
 
-fn process_page_binding(source: &str, manifest: &Manifest, article: &Article) -> Option<String> {
+fn process_page_binding(
+    source: &str,
+    manifest: &Manifest,
+    article: &Article,
+) -> Result<String, DirectiveError> {
     match source {
         "pageTitle" => {
             if article.default {
-                Some(manifest.title.clone())
+                Ok(manifest.title.clone())
             } else {
-                Some(format!("{} - {}", article.short_title, manifest.title))
+                Ok(format!("{} - {}", article.short_title, manifest.title))
             }
         }
         _ => process_common_binding(source, manifest, article),
