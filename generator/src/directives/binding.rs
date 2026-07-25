@@ -15,9 +15,6 @@ pub enum DirectiveError {
     #[error("Unable to find article with provided ID: {0}")]
     ArticleNotFound(String),
 
-    #[error("The path to the provided article could not be converted to UTF-8: {0}")]
-    InvalidArticlePath(String),
-
     #[error("The source for the provided binding is not valid: {0}")]
     InvalidBindingSource(String),
 
@@ -57,12 +54,11 @@ impl<'a> BindingContext<'a> {
                     .get(&directive.source)
                     .ok_or_else(|| DirectiveError::ArticleNotFound(directive.source.clone()))?;
 
-                destination::make_article_path(self.manifest, &referenced_article, true)
-                    .to_str()
-                    .map(String::from)
-                    .ok_or_else(|| {
-                        DirectiveError::InvalidArticlePath(referenced_article.id.clone())
-                    })
+                Ok(href::normalize(&destination::make_article_path(
+                    self.manifest,
+                    &referenced_article,
+                    true,
+                )))
             }
             DirectiveKind::StaticResource => self
                 .resources
