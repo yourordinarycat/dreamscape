@@ -27,12 +27,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         out_dir.push(base_path);
     }
 
+    //
     // 2. Process static resources
+    //
+    // Trying to recover from the initial FS operations & manifest parsing
+    // isn't particularly useful as other operations depend on having a
+    // manifest available at minimum. Starting here, errors will be added to
+    // diagnostics instead of causing an early exit.
+    //
     let resources_dir = cwd.join("resources");
     let out_resources_dir = out_dir.join("resources");
 
-    let resource_map =
-        resources::discovery::find_all(&resources_dir, &out_resources_dir, &base_out_dir)?;
+    let (resource_map, diag) =
+        resources::discovery::find_all(&resources_dir, &out_resources_dir, &base_out_dir);
+    diagnostics.merge(diag);
 
     // 3. Get articles
     let articles_dir = cwd.join("articles");
