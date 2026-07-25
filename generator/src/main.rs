@@ -39,7 +39,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let layouts = get_layouts(layouts_dir)?;
 
     // 5. Process articles
-    articles::writer::write_to(out_dir, &manifest, &articles, &layouts, &resource_map)?;
+    articles::writer::write_to(base_out_dir, &manifest, &articles, &layouts, &resource_map)?;
 
     Ok(())
 }

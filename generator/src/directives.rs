@@ -1,8 +1,11 @@
+pub mod binding;
 pub mod connection;
 pub mod context;
+pub mod date;
+pub mod destination;
 pub mod html;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum DirectiveContext {
     Page,
     Article,

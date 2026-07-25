@@ -87,3 +87,12 @@ pub fn get_directive_context(node: &Selection) -> DirectiveContext {
         DirectiveContext::Page
     }
 }
+
+/// Applies a directive using the provided value to the node.
+pub fn apply(node: &Selection, directive: &Directive, value: &str) {
+    if directive.target_kind == TargetKind::Attribute {
+        node.set_attr(&*directive.target, value);
+    } else if directive.target == "content" {
+        node.set_html(value);
+    }
+}
