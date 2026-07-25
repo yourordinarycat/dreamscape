@@ -1,4 +1,5 @@
 mod articles;
+mod diagnostics;
 mod directives;
 mod layouts;
 mod manifest;
@@ -6,10 +7,13 @@ mod resources;
 
 use std::fs;
 
+use diagnostics::Diagnostics;
 use layouts::get_layouts;
 use manifest::load_manifest;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut diagnostics = Diagnostics::default();
+
     let cwd = std::env::current_dir()?;
     let base_out_dir = cwd.join("dist");
     fs::remove_dir_all(&base_out_dir)?;
@@ -39,7 +43,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let layouts = get_layouts(layouts_dir)?;
 
     // 5. Process articles
-    articles::writer::write_to(base_out_dir, &manifest, &articles, &layouts, &resource_map)?;
+    diagnostics.merge(articles::writer::write_to(
+        base_out_dir,
+        &manifest,
+        &articles,
+        &layouts,
+        &resource_map,
+    ));
 
+    if diagnostics.failed() {
+        for err in diagnostics.errors {
+            eprintln!("{}", err);
+        }
+    }
     Ok(())
 }
