@@ -1,7 +1,10 @@
-use crate::articles::writer::WriterError;
+use crate::{articles::writer::WriterError, resources::discovery::ResourceDiscoveryError};
 
 #[derive(thiserror::Error, Debug)]
 pub enum GeneratorError {
+    #[error(transparent)]
+    ResourceDiscoveryError(#[from] ResourceDiscoveryError),
+
     #[error(transparent)]
     WriterError(#[from] WriterError),
 }
