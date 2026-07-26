@@ -11,6 +11,7 @@ use crate::{
     },
     diagnostics::Diagnostics,
     manifest::Manifest,
+    path_ext,
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -61,13 +62,7 @@ fn process_entry(
         .expect("Failed to render Markdown to HTML");
 
     let metadata = extract_front_matter(&content)?;
-    let id = entry
-        .path()
-        .file_stem()
-        .expect("File stem should not be None.")
-        .to_str()
-        .expect("Failed to convert string to UTF-8.")
-        .to_string();
+    let id = path_ext::name_to_str(src_path.file_stem())?;
 
     let created = parse_iso_date(&metadata.created)?;
     let updated = if let Some(updated_at) = metadata.updated {
@@ -82,7 +77,7 @@ fn process_entry(
     let default = id == "index";
 
     vec.push(Article {
-        id,
+        id: id.to_owned(),
         title: metadata.title,
         short_title,
         author: metadata.author.unwrap_or(manifest.author.clone()),
