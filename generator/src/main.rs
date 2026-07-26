@@ -44,7 +44,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 3. Get articles
     let articles_dir = cwd.join("articles");
-    let articles = articles::discovery::find_all(articles_dir, &manifest)?;
+    let (articles, diag) = articles::discovery::find_all(articles_dir, &manifest);
+    diagnostics.merge(diag);
 
     // 4. Get layouts
     let layouts_dir = cwd.join("layouts");
