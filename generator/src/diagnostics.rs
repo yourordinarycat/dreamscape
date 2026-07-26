@@ -1,7 +1,13 @@
-use crate::{articles::writer::WriterError, resources::discovery::ResourceDiscoveryError};
+use crate::{
+    articles::{discovery::ArticleDiscoveryError, writer::WriterError},
+    resources::discovery::ResourceDiscoveryError,
+};
 
 #[derive(thiserror::Error, Debug)]
 pub enum GeneratorError {
+    #[error(transparent)]
+    ArticleDiscoveryError(#[from] ArticleDiscoveryError),
+
     #[error(transparent)]
     ResourceDiscoveryError(#[from] ResourceDiscoveryError),
 
