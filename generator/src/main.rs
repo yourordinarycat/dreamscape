@@ -3,6 +3,7 @@ mod diagnostics;
 mod directives;
 mod layouts;
 mod manifest;
+mod path_ext;
 mod resources;
 
 use std::fs;
@@ -49,7 +50,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 4. Get layouts
     let layouts_dir = cwd.join("layouts");
-    let layouts = get_layouts(layouts_dir)?;
+    let (layouts, diag) = get_layouts(layouts_dir);
+    diagnostics.merge(diag);
 
     // 5. Process articles
     diagnostics.merge(articles::writer::write_to(
