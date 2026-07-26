@@ -3,7 +3,7 @@ use std::fs;
 use std::path::Path;
 use walkdir::WalkDir;
 
-use crate::{diagnostics::Diagnostics, resources::map::ResourceMapLoadError};
+use crate::{diagnostics::Diagnostics, path_ext, resources::map::ResourceMapLoadError};
 
 use super::{href, map};
 
@@ -66,9 +66,7 @@ fn process_entry(
         return Ok(());
     }
 
-    let name = src_path.file_name().ok_or_else(|| {
-        std::io::Error::new(std::io::ErrorKind::Other, "File does not have a name.")
-    })?;
+    let name = path_ext::name_to_str(src_path.file_name())?;
 
     // If the file is a JSON resource map, process it instead of copying
     if name == "map.json" {
@@ -81,12 +79,7 @@ fn process_entry(
     fs::copy(src_path, &dst_path)?;
 
     // Add resource to map
-    let os_key = src_path.file_stem().ok_or_else(|| {
-        std::io::Error::new(std::io::ErrorKind::Other, "File does not have a name.")
-    })?;
-    let key = os_key.to_str().ok_or_else(|| {
-        std::io::Error::new(std::io::ErrorKind::Other, "File name is not valid UTF-8.")
-    })?;
+    let key = path_ext::name_to_str(src_path.file_stem())?;
 
     let target = dst_path
         .strip_prefix(base_dst)
