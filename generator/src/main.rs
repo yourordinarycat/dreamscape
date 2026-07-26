@@ -6,11 +6,13 @@ mod manifest;
 mod path_ext;
 mod resources;
 
-use std::fs;
+use std::{fs, path::Path};
 
 use diagnostics::Diagnostics;
 use layouts::get_layouts;
 use manifest::load_manifest;
+
+use crate::resources::href;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut diagnostics = Diagnostics::default();
@@ -55,7 +57,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 5. Process articles
     diagnostics.merge(articles::writer::write_to(
-        base_out_dir,
+        &base_out_dir,
         &manifest,
         &articles,
         &layouts,
@@ -66,6 +68,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for err in diagnostics.errors {
             eprintln!("{}", err);
         }
+    } else {
+        let rel_out = base_out_dir.strip_prefix(cwd)?;
+        let url_path = manifest.base_path.unwrap_or("/".to_string());
+        let href = href::normalize(Path::new(&url_path));
+
+        println!();
+        println!("Generated blog to: {}", base_out_dir.display());
+        println!("Take a look at the content by running:");
+        println!();
+        println!(
+            "    static-web-server --port 80 --root {}",
+            rel_out.display()
+        );
+        println!();
+        println!("And visiting http://localhost{}", href);
+        println!();
     }
+
     Ok(())
 }
