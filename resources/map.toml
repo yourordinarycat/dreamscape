@@ -1,0 +1,7 @@
+[favicon.options]
+base_url = "https://media.yourordinarycat.com/dreamscape/"
+
+[favicon.resources]
+FaviconIco = "favicon.ico"
+FaviconSvg = "icon.svg"
+FaviconAppleTouch = "apple-touch-icon.png"

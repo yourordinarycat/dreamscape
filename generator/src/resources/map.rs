@@ -3,11 +3,15 @@ use std::{collections::HashMap, fs, path::Path};
 use serde::Deserialize;
 use url::Url;
 
-#[derive(Debug, Deserialize, PartialEq)]
-#[serde(untagged)]
-enum ResourceValue {
-    Map(HashMap<String, String>),
-    String(String),
+#[derive(Deserialize, Debug)]
+struct ResourceGroupOptions {
+    base_url: Option<Url>,
+}
+
+#[derive(Deserialize, Debug)]
+struct ResourceGroup {
+    options: Option<ResourceGroupOptions>,
+    resources: HashMap<String, String>,
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -15,11 +19,8 @@ pub enum ResourceMapLoadError {
     #[error("Found multiple resources with key '{0}' in resource map.")]
     DuplicateKeyError(String),
 
-    #[error("Can't get path segments of URL '{0}'")]
-    NonBaseUrlError(String),
-
     #[error(transparent)]
-    ParseError(#[from] serde_json::Error),
+    ParseError(#[from] toml::de::Error),
 
     #[error(transparent)]
     UrlParseError(#[from] url::ParseError),
@@ -43,31 +44,22 @@ pub fn load_resource_mapping(
     src: impl AsRef<Path>,
 ) -> Result<HashMap<String, String>, ResourceMapLoadError> {
     let file_contents = fs::read_to_string(&src)?;
-    let record: HashMap<String, ResourceValue> = serde_json::from_str(&file_contents)?;
+    let record: HashMap<String, ResourceGroup> = toml::from_str(&file_contents)?;
 
     let mut resource_map: HashMap<String, String> = HashMap::new();
 
-    for (k, v) in &record {
-        match v {
-            ResourceValue::String(s) => {
-                check_duplicate(&resource_map, k)?;
-                resource_map.insert(k.clone(), s.clone());
-            }
-            ResourceValue::Map(inner_map) => {
-                let url = Url::parse(k)?;
+    for (_, group) in record.into_iter() {
+        let base_url = group.options.map(|o| o.base_url).flatten();
 
-                for (key, value) in inner_map {
-                    let mut full_path = url.clone();
-                    {
-                        let mut segments = full_path
-                            .path_segments_mut()
-                            .map_err(|_| ResourceMapLoadError::NonBaseUrlError(k.clone()))?;
-                        segments.push(value);
-                    }
+        for (key, value) in group.resources.into_iter() {
+            if let Some(ref url) = base_url {
+                let full_path = url.join(&value)?;
 
-                    check_duplicate(&resource_map, key)?;
-                    resource_map.insert(key.clone(), full_path.to_string());
-                }
+                check_duplicate(&resource_map, &key)?;
+                resource_map.insert(key, full_path.to_string());
+            } else {
+                check_duplicate(&resource_map, &key)?;
+                resource_map.insert(key, value);
             }
         }
     }

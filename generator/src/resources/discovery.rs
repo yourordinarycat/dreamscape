@@ -68,8 +68,8 @@ fn process_entry(
 
     let name = path_ext::name_to_str(src_path.file_name())?;
 
-    // If the file is a JSON resource map, process it instead of copying
-    if name == "map.json" {
+    // If the file is a resource map, process it instead of copying
+    if name == "map.toml" {
         let mapping = map::load_resource_mapping(src_path)?;
 
         extend_checked(resource_map, &mapping)?;
