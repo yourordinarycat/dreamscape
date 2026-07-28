@@ -6,7 +6,7 @@ use std::path::Path;
 #[derive(thiserror::Error, Debug)]
 pub enum ManifestError {
     #[error(transparent)]
-    ParseError(#[from] serde_json::Error),
+    ParseError(#[from] toml::de::Error),
 
     #[error(transparent)]
     Io(#[from] std::io::Error),
@@ -21,9 +21,14 @@ pub struct Manifest {
     pub base_path: Option<String>,
 }
 
+#[derive(Deserialize)]
+struct ManifestInfo {
+    manifest: Manifest,
+}
+
 pub fn load_manifest(src: impl AsRef<Path>) -> Result<Manifest, ManifestError> {
     let file_contents = fs::read_to_string(&src)?;
-    let manifest: Manifest = serde_json::from_str(&file_contents)?;
+    let manifest_info: ManifestInfo = toml::from_str(&file_contents)?;
 
-    Ok(manifest)
+    Ok(manifest_info.manifest)
 }

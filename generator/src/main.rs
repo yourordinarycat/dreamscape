@@ -24,7 +24,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut out_dir = base_out_dir.clone();
 
     // 1. Process manifest
-    let manifest = load_manifest(cwd.join("manifest.json"))?;
+    let manifest = load_manifest(cwd.join("manifest.toml"))?;
 
     if let Some(base_path) = &manifest.base_path {
         out_dir.push(base_path);
