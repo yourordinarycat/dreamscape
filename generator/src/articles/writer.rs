@@ -4,6 +4,7 @@ use std::{collections::HashMap, fs, path::Path};
 
 use crate::{
     articles::Article,
+    components::Component,
     diagnostics::Diagnostics,
     directives::{
         binding::{BindingContext, DirectiveError},
@@ -57,6 +58,7 @@ fn apply_directives<'a>(
 fn process_article(
     id: &str,
     context: &BindingContext,
+    components: &HashMap<String, Component>,
     layout: &Layout,
 ) -> (Option<String>, Diagnostics) {
     let mut diagnostics = Diagnostics::default();
@@ -135,6 +137,32 @@ fn process_article(
         }
     }
 
+    // Process custom components
+    for (tag, component) in components {
+        let component_nodes = document.select(tag).iter();
+        for node in component_nodes {
+            node.set_html(component.content.clone());
+            let children = node.select(CONNECTION_ID_ATTR_SELECTOR).iter();
+
+            for child in children {
+                let cid: u8 = child.attr(CONNECTION_ID_ATTR).unwrap().parse().unwrap();
+                child.remove_attr(CONNECTION_ID_ATTR);
+    
+                let directives = component.directives.get(&cid).unwrap();
+    
+                for directive in directives {
+                    if let Some(value) = node.attr(&directive.source) {
+                        html::apply(&child, directive, &value);
+                    }
+                }
+            }
+
+            if !node.children().first().is("template") {
+                node.replace_with_selection(&node.children());
+            }
+        }
+    }
+
     // Process remaining elements with connection IDs
     let nodes = document.select(CONNECTION_ID_ATTR_SELECTOR);
     apply_all(nodes, id);
@@ -150,6 +178,7 @@ pub fn write_to(
     dst: impl AsRef<Path>,
     manifest: &Manifest,
     articles: &IndexMap<String, Article>,
+    components: &HashMap<String, Component>,
     layouts: &HashMap<String, Layout>,
     resources: &HashMap<String, String>,
 ) -> Diagnostics {
@@ -164,7 +193,7 @@ pub fn write_to(
 
     for (id, article) in articles {
         if let Some(layout) = layouts.get(&article.layout) {
-            let (content, diag) = process_article(id, &context, layout);
+            let (content, diag) = process_article(id, &context, components, layout);
             diagnostics.merge(diag);
 
             if let Some(content) = content {

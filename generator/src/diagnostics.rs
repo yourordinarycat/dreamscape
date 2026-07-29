@@ -1,5 +1,6 @@
 use crate::{
     articles::{discovery::ArticleDiscoveryError, writer::WriterError},
+    components::discovery::ComponentDiscoveryError,
     layouts::LayoutDiscoveryError,
     resources::discovery::ResourceDiscoveryError,
 };
@@ -8,6 +9,9 @@ use crate::{
 pub enum GeneratorError {
     #[error(transparent)]
     ArticleDiscoveryError(#[from] ArticleDiscoveryError),
+
+    #[error(transparent)]
+    ComponentDiscoveryError(#[from] ComponentDiscoveryError),
 
     #[error(transparent)]
     LayoutDiscoveryError(#[from] LayoutDiscoveryError),

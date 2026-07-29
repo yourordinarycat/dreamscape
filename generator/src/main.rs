@@ -1,4 +1,5 @@
 mod articles;
+mod components;
 mod diagnostics;
 mod directives;
 mod layouts;
@@ -50,16 +51,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (articles, diag) = articles::discovery::find_all(articles_dir, &manifest);
     diagnostics.merge(diag);
 
-    // 4. Get layouts
+    // 4. Get components
+    let components_dir = cwd.join("components");
+    let (components, diag) = components::discovery::find_all(components_dir);
+    diagnostics.merge(diag);
+
+    // 5. Get layouts
     let layouts_dir = cwd.join("layouts");
     let (layouts, diag) = get_layouts(layouts_dir);
     diagnostics.merge(diag);
 
-    // 5. Process articles
+    // 6. Process articles
     diagnostics.merge(articles::writer::write_to(
         &base_out_dir,
         &manifest,
         &articles,
+        &components,
         &layouts,
         &resource_map,
     ));
