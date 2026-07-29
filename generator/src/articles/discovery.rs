@@ -100,6 +100,10 @@ pub fn find_all(
     let src = src.as_ref();
 
     let markdown_parse_options = markdown::Options {
+        compile: markdown::CompileOptions {
+            allow_dangerous_html: true,
+            ..markdown::CompileOptions::default()
+        },
         parse: markdown::ParseOptions {
             constructs: markdown::Constructs {
                 frontmatter: true,
