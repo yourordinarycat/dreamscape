@@ -1,3 +1,7 @@
+use lightningcss::{
+    printer::PrinterOptions,
+    stylesheet::{MinifyOptions, ParserOptions, StyleSheet},
+};
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
@@ -76,7 +80,30 @@ fn process_entry(
         return Ok(());
     }
 
-    fs::copy(src_path, &dst_path)?;
+    if name.ends_with(".css") {
+        let style = fs::read_to_string(src_path)?;
+        let mut stylesheet =
+            StyleSheet::parse(&style, ParserOptions::default()).expect("Failed to parse CSS");
+
+        let minify_options = MinifyOptions::default();
+
+        stylesheet
+            .minify(minify_options)
+            .expect("Failed to minify CSS");
+
+        let printer_options = PrinterOptions {
+            minify: true,
+            ..Default::default()
+        };
+
+        let result = stylesheet
+            .to_css(printer_options)
+            .expect("Failed to print CSS");
+
+        fs::write(&dst_path, result.code)?;
+    } else {
+        fs::copy(src_path, &dst_path)?;
+    }
 
     // Add resource to map
     let key = path_ext::name_to_str(src_path.file_stem())?;
