@@ -18,7 +18,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let cwd = std::env::current_dir()?;
     let base_out_dir = cwd.join("dist");
-    fs::remove_dir_all(&base_out_dir)?;
+
+    if fs::exists(&base_out_dir)? {
+        fs::remove_dir_all(&base_out_dir)?;
+    }
 
     let mut out_dir = base_out_dir.clone();
 
