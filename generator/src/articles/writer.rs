@@ -1,5 +1,6 @@
 use dom_query::Document;
 use indexmap::IndexMap;
+use minify_html::{Cfg, minify};
 use std::{collections::HashMap, fs, path::Path};
 
 use crate::{
@@ -145,6 +146,8 @@ pub fn write_to(
         resources,
     };
 
+    let minify_cfg = Cfg::default();
+
     for (id, article) in articles {
         if let Some(layout) = layouts.get(&article.layout) {
             let (content, diag) = process_article(id, &context, components, layout);
@@ -160,7 +163,8 @@ pub fn write_to(
                     }
                 }
 
-                if let Err(err) = fs::write(path, content) {
+                let minified = minify(content.as_bytes(), &minify_cfg);
+                if let Err(err) = fs::write(path, minified) {
                     diagnostics.errors.push(WriterError::Io(err).into());
                     continue;
                 }
