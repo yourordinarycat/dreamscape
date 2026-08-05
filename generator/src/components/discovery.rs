@@ -2,12 +2,7 @@ use dom_query::Document;
 use std::{collections::HashMap, fs, path::Path};
 use walkdir::WalkDir;
 
-use crate::{
-    components::Component,
-    diagnostics::Diagnostics,
-    directives::{self, Directive, connection::CONNECTION_ID_ATTR},
-    path_ext,
-};
+use crate::{components::Component, diagnostics::Diagnostics, directives, path_ext};
 
 #[derive(thiserror::Error, Debug)]
 pub enum ComponentDiscoveryError {
@@ -17,21 +12,8 @@ pub enum ComponentDiscoveryError {
 
 fn process_component(content: &str) -> Component {
     let document = Document::from(content);
-    let mut directive_map: HashMap<u8, Vec<Directive>> = HashMap::new();
-    let mut curr_cid: u8 = 0;
-
     let nodes = document.select("*").iter();
-
-    for node in nodes {
-        let directives: Vec<_> = directives::html::from_node(&node).collect();
-
-        if directives.len() > 0 {
-            directive_map.insert(curr_cid, directives);
-
-            node.set_attr(CONNECTION_ID_ATTR, &curr_cid.to_string());
-            curr_cid += 1;
-        }
-    }
+    let directive_map = directives::html::extract_all(nodes);
 
     Component {
         content: document.html().to_string(),

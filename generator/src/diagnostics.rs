@@ -1,7 +1,7 @@
 use crate::{
     articles::{discovery::ArticleDiscoveryError, writer::WriterError},
     components::discovery::ComponentDiscoveryError,
-    layouts::LayoutDiscoveryError,
+    directives::binding::DirectiveError,
     resources::discovery::ResourceDiscoveryError,
 };
 
@@ -14,7 +14,7 @@ pub enum GeneratorError {
     ComponentDiscoveryError(#[from] ComponentDiscoveryError),
 
     #[error(transparent)]
-    LayoutDiscoveryError(#[from] LayoutDiscoveryError),
+    DirectiveError(#[from] DirectiveError),
 
     #[error(transparent)]
     ResourceDiscoveryError(#[from] ResourceDiscoveryError),

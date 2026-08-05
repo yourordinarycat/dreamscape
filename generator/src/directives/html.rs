@@ -1,10 +1,11 @@
+use std::collections::HashMap;
+
 use dom_query::Selection;
 
 use super::{
     Directive, DirectiveContext, DirectiveKind, TargetKind,
-    context::{
-        BLG_ARTICLE_LIST_TAG, BLG_ARTICLE_TAG, BLG_NEXT_ARTICLE_TAG, BLG_PREVIOUS_ARTICLE_TAG,
-    },
+    binding::{BindingContext, DirectiveError},
+    connection::CONNECTION_ID_ATTR,
 };
 
 fn remove_first_and_last(s: &str) -> &str {
@@ -73,19 +74,22 @@ pub fn from_node(node: &Selection) -> impl Iterator<Item = Directive> {
     })
 }
 
-pub fn get_directive_context(node: &Selection) -> DirectiveContext {
-    let relevant_ancestor = node.ancestors(None).iter().any(|ancestor| {
-        ancestor.is(BLG_ARTICLE_TAG)
-            || ancestor.is(BLG_ARTICLE_LIST_TAG)
-            || ancestor.is(BLG_PREVIOUS_ARTICLE_TAG)
-            || ancestor.is(BLG_NEXT_ARTICLE_TAG)
-    });
+pub fn extract_all<'a>(nodes: impl Iterator<Item = Selection<'a>>) -> HashMap<u8, Vec<Directive>> {
+    let mut directive_map: HashMap<u8, Vec<Directive>> = HashMap::new();
+    let mut curr_cid: u8 = 0;
 
-    if relevant_ancestor {
-        DirectiveContext::Article
-    } else {
-        DirectiveContext::Page
+    for node in nodes {
+        let directives: Vec<_> = from_node(&node).collect();
+
+        if directives.len() > 0 {
+            directive_map.insert(curr_cid, directives);
+
+            node.set_attr(CONNECTION_ID_ATTR, &curr_cid.to_string());
+            curr_cid += 1;
+        }
     }
+
+    directive_map
 }
 
 /// Applies a directive using the provided value to the node.
@@ -95,4 +99,30 @@ pub fn apply(node: &Selection, directive: &Directive, value: &str) {
     } else if directive.target == "content" {
         node.set_html(value);
     }
+}
+
+pub fn apply_all<'a>(
+    nodes: impl Iterator<Item = Selection<'a>>,
+    id: &str,
+    directives: &HashMap<u8, Vec<Directive>>,
+    context: &BindingContext,
+    directive_context: DirectiveContext,
+) -> Vec<DirectiveError> {
+    let mut errors: Vec<DirectiveError> = Vec::new();
+
+    for node in nodes {
+        let cid: u8 = node.attr(CONNECTION_ID_ATTR).unwrap().parse().unwrap();
+        node.remove_attr(CONNECTION_ID_ATTR);
+
+        let directives = directives.get(&cid).unwrap();
+
+        for directive in directives {
+            match context.get(id, directive, directive_context) {
+                Ok(value) => apply(&node, directive, &value),
+                Err(err) => errors.push(err),
+            };
+        }
+    }
+
+    errors
 }

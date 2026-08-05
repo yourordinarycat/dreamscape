@@ -1,20 +1,23 @@
-use dom_query::{Document, Selection};
+use dom_query::Document;
 use indexmap::IndexMap;
 use std::{collections::HashMap, fs, path::Path};
 
 use crate::{
     articles::Article,
-    components::Component,
+    components::{
+        Component, article::ArticleElement, article_list::ArticleListElement,
+        article_preview::ArticlePreviewElement,
+    },
     diagnostics::Diagnostics,
     directives::{
-        binding::{BindingContext, DirectiveError},
+        DirectiveContext,
+        binding::BindingContext,
         connection::{CONNECTION_ID_ATTR, CONNECTION_ID_ATTR_SELECTOR},
         context::{
             BLG_ARTICLE_LIST_TAG, BLG_ARTICLE_TAG, BLG_NEXT_ARTICLE_TAG, BLG_PREVIOUS_ARTICLE_TAG,
         },
         destination, html,
     },
-    layouts::Layout,
     manifest::Manifest,
 };
 
@@ -24,66 +27,23 @@ pub enum WriterError {
     LayoutNotFound(String),
 
     #[error(transparent)]
-    DirectiveError(#[from] DirectiveError),
-
-    #[error(transparent)]
     Io(#[from] std::io::Error),
-}
-
-fn apply_directives<'a>(
-    nodes: impl Iterator<Item = Selection<'a>>,
-    id: &str,
-    context: &BindingContext,
-    layout: &Layout,
-) -> Vec<DirectiveError> {
-    let mut errors: Vec<DirectiveError> = Vec::new();
-
-    for node in nodes {
-        let cid: u8 = node.attr(CONNECTION_ID_ATTR).unwrap().parse().unwrap();
-        node.remove_attr(CONNECTION_ID_ATTR);
-
-        let (directive_context, directives) = layout.directives.get(&cid).unwrap();
-
-        for directive in directives {
-            match context.get(id, directive, *directive_context) {
-                Ok(value) => html::apply(&node, directive, &value),
-                Err(err) => errors.push(err),
-            };
-        }
-    }
-
-    errors
 }
 
 fn process_article(
     id: &str,
     context: &BindingContext,
     components: &HashMap<String, Component>,
-    layout: &Layout,
+    layout: &Component,
 ) -> (Option<String>, Diagnostics) {
     let mut diagnostics = Diagnostics::default();
 
-    let mut apply_all = |nodes: Selection<'_>, id: &str| {
-        let errs = apply_directives(nodes.iter(), id, context, layout);
-
-        diagnostics.errors.extend(
-            errs.into_iter()
-                .map(|e| WriterError::DirectiveError(e.into()).into()),
-        );
-    };
-
     let document = Document::from(&*layout.content);
-    let article = context.articles.get(id).unwrap();
 
     let article_nodes = document.select(BLG_ARTICLE_TAG).iter();
     for node in article_nodes {
-        let html = Document::from(&*article.content).html();
-        if !article.default {
-            node.rename("article");
-            node.append_html(html);
-        } else {
-            node.replace_with_html(html);
-        }
+        let mut article_element = ArticleElement::new(&node);
+        diagnostics.merge(article_element.inflate(id, context));
     }
 
     let prev_idx = context.articles.get_index_of(id).unwrap() + 1;
@@ -93,8 +53,8 @@ fn process_article(
         && !previous.default
     {
         for node in prev_article_nodes.iter() {
-            apply_all(node.select(CONNECTION_ID_ATTR_SELECTOR), &previous.id);
-            node.replace_with_selection(&node.children());
+            let mut article_preview_element = ArticlePreviewElement::new(&node);
+            diagnostics.merge(article_preview_element.inflate(&previous.id, context));
         }
     } else {
         prev_article_nodes.remove();
@@ -108,8 +68,8 @@ fn process_article(
         && !next.default
     {
         for node in next_article_nodes.iter() {
-            apply_all(node.select(CONNECTION_ID_ATTR_SELECTOR), &next.id);
-            node.replace_with_selection(&node.children());
+            let mut article_preview_element = ArticlePreviewElement::new(&node);
+            diagnostics.merge(article_preview_element.inflate(&next.id, context));
         }
     } else {
         next_article_nodes.remove();
@@ -117,24 +77,8 @@ fn process_article(
 
     let article_list_nodes = document.select(BLG_ARTICLE_LIST_TAG).iter();
     for node in article_list_nodes {
-        node.rename("ul");
-        node.add_class("article-list");
-
-        let template = node.inner_html();
-        node.children().remove();
-
-        for (_, article) in context.articles {
-            if article.default {
-                continue;
-            }
-
-            node.append_html("<li></li>");
-            let li = node.children().last();
-
-            li.append_html(template.clone());
-
-            apply_all(li.select(CONNECTION_ID_ATTR_SELECTOR), &article.id);
-        }
+        let mut article_list_element = ArticleListElement::new(&node);
+        diagnostics.merge(article_list_element.inflate(context));
     }
 
     // Process custom components
@@ -147,9 +91,9 @@ fn process_article(
             for child in children {
                 let cid: u8 = child.attr(CONNECTION_ID_ATTR).unwrap().parse().unwrap();
                 child.remove_attr(CONNECTION_ID_ATTR);
-    
+
                 let directives = component.directives.get(&cid).unwrap();
-    
+
                 for directive in directives {
                     if let Some(value) = node.attr(&directive.source) {
                         html::apply(&child, directive, &value);
@@ -165,7 +109,17 @@ fn process_article(
 
     // Process remaining elements with connection IDs
     let nodes = document.select(CONNECTION_ID_ATTR_SELECTOR);
-    apply_all(nodes, id);
+    let errs = html::apply_all(
+        nodes.iter(),
+        id,
+        &layout.directives,
+        context,
+        DirectiveContext::Page,
+    );
+
+    diagnostics
+        .errors
+        .extend(errs.into_iter().map(|e| e.into()));
 
     if diagnostics.failed() {
         (None, diagnostics)
@@ -179,7 +133,7 @@ pub fn write_to(
     manifest: &Manifest,
     articles: &IndexMap<String, Article>,
     components: &HashMap<String, Component>,
-    layouts: &HashMap<String, Layout>,
+    layouts: &HashMap<String, Component>,
     resources: &HashMap<String, String>,
 ) -> Diagnostics {
     let mut diagnostics = Diagnostics::default();

@@ -2,7 +2,6 @@ mod articles;
 mod components;
 mod diagnostics;
 mod directives;
-mod layouts;
 mod manifest;
 mod path_ext;
 mod resources;
@@ -10,7 +9,6 @@ mod resources;
 use std::{fs, path::Path};
 
 use diagnostics::Diagnostics;
-use layouts::get_layouts;
 use manifest::load_manifest;
 
 use crate::resources::href;
@@ -58,7 +56,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 5. Get layouts
     let layouts_dir = cwd.join("layouts");
-    let (layouts, diag) = get_layouts(layouts_dir);
+    let (layouts, diag) = components::discovery::find_all(layouts_dir);
     diagnostics.merge(diag);
 
     // 6. Process articles
