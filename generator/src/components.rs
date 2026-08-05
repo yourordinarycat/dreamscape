@@ -1,4 +1,8 @@
+pub mod article;
+pub mod article_list;
+pub mod article_preview;
 pub mod discovery;
+pub mod template;
 
 use std::collections::HashMap;
 

@@ -17,14 +17,16 @@
     <blg-article></blg-article>
 
     <blg-article-list>
-      <h3>
-        <a attr.href="{Binding url}" content="{Binding title}"></a>
-      </h3>
-      <span>
-        <time attr.datetime="{Binding publishDate}" content="{Binding publishDisplayDate}"></time>
-        -
-        <span content="{Binding author}"></span>
-      </span>
+      <template>
+        <h3>
+          <a attr.href="{Binding url}" content="{Binding title}"></a>
+        </h3>
+        <span>
+          <time attr.datetime="{Binding publishDate}" content="{Binding publishDisplayDate}"></time>
+          -
+          <span content="{Binding author}"></span>
+        </span>
+      </template>
     </blg-article-list>
 
     <hr>
