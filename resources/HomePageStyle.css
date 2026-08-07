@@ -1,5 +1,14 @@
 @import "./BasePageStyle.css";
 
+ul.article-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+ul.article-list>li {
+  margin-block: 0 1.5em;
+}
+
 .wfsth {
   animation: fly-in;
   animation-delay: 30s;
@@ -7,6 +16,7 @@
   animation-fill-mode: forwards;
   animation-timing-function: cubic-bezier(0.41, 0.52, 0, 0.94);
   visibility: hidden;
+  text-align: center;
 }
 
 @keyframes fly-in {

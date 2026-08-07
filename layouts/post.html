@@ -2,8 +2,10 @@
 <html attr.lang="{Binding language}">
 
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="text-scale" content="scale">
   <meta charset="utf-8">
+
   <title content="{Binding pageTitle}"></title>
   <meta name="author" attr.content="{Binding author}">
 
@@ -38,7 +40,7 @@
     <blg-previous-article>
       <template>
         <a attr.href="{Binding url}" attr.title="{Binding title}">
-          <small>previous post</small>
+          <span class="semi-bold">previous post</span>
           <p content="{Binding title}"></p>
         </a>
       </template>
@@ -47,7 +49,7 @@
     <blg-next-article>
       <template>
         <a attr.href="{Binding url}" attr.title="{Binding title}">
-          <small>next post</small>
+          <span class="semi-bold">next post</span>
           <p content="{Binding title}"></p>
         </a>
       </template>

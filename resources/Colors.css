@@ -1,0 +1,48 @@
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #2d3236;
+    --foreground: #ffffff;
+
+    --block-background: #202020;
+    --block-foreground: #ffffff;
+
+    --divider: #fffaef;
+    --accent: #70ebde;
+    --selection-background: #a1bfde;
+    --selection-foreground: #212d3b;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --background: #fffaef;
+    --foreground: #3d3d3d;
+
+    --block-background: #dfdacf;
+    --block-foreground: #1d1d1d;
+
+    --divider: #3d3d3d;
+    --accent: #1c5e75;
+    --selection-background: #903909;
+    --selection-foreground: #fff5e3;
+  }
+}
+
+@media (forced-colors: active) {
+  :root {
+    --background: Canvas;
+    --foreground: CanvasText;
+
+    --block-background: Canvas;
+    --block-foreground: CanvasText;
+
+    --divider: CanvasText;
+    --accent: LinkText;
+    --selection-background: Highlight;
+    --selection-foreground: HighlightText;
+  }
+}
+
+:root {
+  color-scheme: light dark;
+}
